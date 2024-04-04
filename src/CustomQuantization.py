@@ -1,5 +1,6 @@
 import numpy as np
 from scipy import sparse
+import matplotlib.pyplot as plt
 
 from utils import *
 
@@ -14,7 +15,7 @@ class CustomQuantization:
         self.firstRange = None
         self.secondRange = None
 
-    def extractRange(self, original_weights, input_x = None):
+    def extractRange(self, original_weights, input_x = None, smoothing_window_size = 25, sensitivity = 0.5, save_plot=False, plot_path=None):
         '''
         Extraction of the configuration and required processes are performed. Then the quantization process is performed.
 
@@ -22,10 +23,19 @@ class CustomQuantization:
         ----------
         original_weights : numpy ndarray
             original weight of the dense layer
+        input_x : numpy ndarray (2D)
+            sample on which quantization is performed
+        smoothing_window_size : int
+            size of the smoothing window for smoothrollingAverage
+        sensitivity : float
+            factor impact of the threshold for finding suitable region
         '''
 
         if input_x is None:
             input_x = np.random.randn(1, original_weights.shape[1])
+        
+        if len(input_x.shape) != 2:
+            raise ValueError("'input_x' must be a 2D array")
 
         # Extraction of original weights forward-pass output
         True_Y = forwPass(input_x, original_weights)
@@ -36,13 +46,24 @@ class CustomQuantization:
 
         # Finding slope of it loss variation and smoothing the slope signal
         Slope, Range = findSlope(Loss, Range)
-        smooth_Slope = SmoothRollingAverage(Slope, window_size=20)
+        smooth_Slope = SmoothRollingAverage(Slope, window_size=smoothing_window_size)
 
         # Threshold to select the region of interest
-        cut_Threshold = findThreshold(smooth_Slope)
+        cut_Threshold = findThreshold(smooth_Slope, sensitivity)
 
         # original_weight range of acceptence
         accepted_Index = smooth_Slope > cut_Threshold
+
+        if save_plot:
+            if isinstance(plot_path, str):
+                plt.plot(Range, smooth_Slope, Range, accepted_Index)
+                plt.title('REGION OF POSSIBLE SELECTION RANGE PLOT')
+                plt.xlabel('thresholds')
+                plt.ylabel('smoothened slope')
+                plt.savefig(plot_path)
+                plt.close()
+            else:
+                raise ValueError("'plot_path' must be a string")
 
         # Finding the suitable range of weight values
         Ranges = findRanges(accepted_Index, smooth_Slope, Range)
