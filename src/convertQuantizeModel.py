@@ -27,6 +27,7 @@ def convertDenseLayer(ModelModule, requires_plot=False):
     for name, child in ModelModule.named_children():
         # If the sub module is a linear layer
         if isinstance(child, torch.nn.Linear):
+            print('Layer Name:', name)
             # Replaces with a linear layer with Quantization Layer
             QuantizationObject  = quant()
             layerweight = child.weight.detach().numpy().copy()
