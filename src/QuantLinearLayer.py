@@ -10,10 +10,8 @@ class QuantLinear(nn.Module):
         self.bias = bias
 
     def forward(self, input):
-        print("Forward Called")
 
         weight = self.QuantizationObject.dequantize()
         weight = torch.tensor(weight, dtype=torch.float32)
-        print(weight.dtype, self.bias.dtype)
     
         return F.linear(input, weight, self.bias)
