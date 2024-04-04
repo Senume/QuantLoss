@@ -29,6 +29,10 @@ class CustomQuantization:
             size of the smoothing window for smoothrollingAverage
         sensitivity : float
             factor impact of the threshold for finding suitable region
+        save_plot : bool
+            if true, saves the possible weight region plot, else none
+        plot_path : str
+            location of the plot to saved in
         '''
 
         if input_x is None:
@@ -76,6 +80,13 @@ class CustomQuantization:
         self.firstRange = (np.min(FirstRange[1]), np.max(FirstRange[1]))
         self.secondRange = (np.min(SecondRange[1]), np.max(SecondRange[1]))
 
+        # Rearanging based on the location of the selected region
+        if self.firstRange[1] > self.secondRange[0]:
+            self.firstRange, self.secondRange = self.secondRange, self.firstRange
+
+        print('First Region Range: ', self.firstRange)
+        print('Second Region Range', self.secondRange)
+
     def proceedQuantization(self, original_weight):
         '''
             Prceeds with setting quantizing configuration and quantization of weights
@@ -114,7 +125,6 @@ class CustomQuantization:
         """
 
         [FirstRange, SecondRange] = [self.firstRange, self.secondRange]
-        print(FirstRange, SecondRange)
 
         # First Range
         FirstStartThreshold, FirstEndThreshold = FirstRange[0], FirstRange[1]
