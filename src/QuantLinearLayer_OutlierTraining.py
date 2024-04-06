@@ -1,6 +1,6 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import torch                        #type:ignore
+import torch.nn as nn               #type:ignore
+import torch.nn.functional as F     #type:ignore
 
 class QuantLinear(nn.Module):
 
@@ -16,7 +16,7 @@ class QuantLinear(nn.Module):
         weight = self.QuantizationObject.dequantize()
         weight = torch.tensor(weight, dtype=torch.float32)
 
-        Outlier = torch.Tensor(QuantizationObject.outlierIndex.toarray(), dtype=torch.float32)
+        Outlier = torch.Tensor(self.QuantizationObject.outlierIndex.toarray(), dtype=torch.float32)
 
         with torch.no_grad():
             Outlier = Outlier*self.GradUpdates

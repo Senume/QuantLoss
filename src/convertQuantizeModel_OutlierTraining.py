@@ -1,4 +1,4 @@
-import torch
+import torch                                                                        #type:ignore
 from  QuantLinearLayer_OutlierTraining import QuantLinear
 from  CustomQuantization_OutlierTraining import CustomQuantization as quant
 

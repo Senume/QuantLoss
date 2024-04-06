@@ -1,4 +1,4 @@
-import torch
+import torch                                                            #type:ignore
 from  QuantLinearLayer import QuantLinear
 from CustomQuantization import CustomQuantization as quant
 
