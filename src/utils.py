@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import sparse
 
 def forwPass(X, w):
     '''
@@ -248,3 +249,30 @@ def findThreshold(signal, sensitivity=0.5):
 
     '''
     return sensitivity*np.mean(signal)
+
+def findOutlinear(weight, std,sensitivity = 2):
+    '''
+    Function to find out the the outliers from the given weight
+
+    Parameters
+    ----------
+    weight : numpy ndarray (2D)
+        Original weight matrix
+    std : float
+        Standard deviation of the weight
+    sensitivity : float (default = 2)
+        Hyper parameter to adjust the deviation factor with respective to standard deviation.
+
+    Returns
+    -------
+    numpy sparse ndarray
+        Pruning weights indexes
+    '''
+
+    RightCase = weight > sensitivity*std
+    LeftCase = weight < (-1)*sensitivity*std
+    Index = LeftCase & RightCase
+
+    # Conversion to sparse matrix
+    SparseIndex = sparse.coo_matrix(Index)
+    return SparseIndex
