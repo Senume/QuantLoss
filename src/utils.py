@@ -46,7 +46,7 @@ def lploss(processed_y, true_y, p = 2):
     return (np.sum(np.abs(true_y - processed_y)**p))**(1/p)
 
 # Finding losses for different range threshold
-def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 0.001, p = 2 ):
+def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 'dynamic', p = 2 ):
     '''
     Functionality module to calculate the loss of the weight for varying thresholds.
 
@@ -60,7 +60,7 @@ def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 0.001, p = 2 ):
         output of forward propagation on orginal weights
     callbacklossfn : function
         loss function to calculate the loss of original output with output of pruned weights outcome
-    step : float (default = 0.001)
+    step : float (default = 'dynamic')
         step size to create evenly spaced valued over min and max of the original weights
     p : int (default = 2)
         dimension space of lp norm
@@ -80,6 +80,10 @@ def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 0.001, p = 2 ):
     # Min and max range value of weight
     local_min = np.min(w)
     local_max = np.max(w)
+    
+    #Checking step size
+    if step == 'dynamic':
+        step = (local_max - local_min) / 100
 
     # Number of point instances between min and max
     points = int((local_max - local_min)/step)
