@@ -1,6 +1,6 @@
-import numpy as np
-from scipy import sparse
-import matplotlib.pyplot as plt
+import numpy as np                      # type: ignore
+from scipy import sparse                # type: ignore
+import matplotlib.pyplot as plt         # type: ignore
 
 from utils import *
 
