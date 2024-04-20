@@ -1,6 +1,7 @@
 import argparse
 import torch                                                # type: ignore
-from convertQuantizeModel_tensor import convertDenseLayer
+from convertQuantizeModel_tensor import convertDenseLayer as gpuQuant
+from convertQuantizeModel import convertDenseLayer as cpuQuant
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -11,10 +12,20 @@ def main():
                     help="directory where the quantized model to be saved.")
     parser.add_argument('--name', type=str,
                     help="name of the model.")  
+    parser.add_argument('--tensor', type=str, default="True", 
+                    help="check if tensor is needed to use.")  
+    
     args = parser.parse_args()
 
     model = torch.load(args.modelpath)
-    quant_model = convertDenseLayer(model)
+
+    if args.tensor == "True":
+        quant_model = gpuQuant(model)
+    elif args.tensor == "False":
+        quant_model = cpuQuant(model)
+    else:
+        raise ValueError("Please enter either True or False")
+        
     torch.save(quant_model, args.outputpath + args.name + ".pt")
 
 
