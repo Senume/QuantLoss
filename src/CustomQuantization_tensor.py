@@ -1,6 +1,5 @@
-import torch
-from scipy import sparse
-import matplotlib.pyplot as plt
+import torch                             # type: ignore
+import matplotlib.pyplot as plt          # type: ignore
 
 from utils_tensor import *
 

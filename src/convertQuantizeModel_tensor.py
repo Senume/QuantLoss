@@ -1,6 +1,6 @@
-import torch
+import torch                                                        # type: ignore
 from  QuantLinearLayer import QuantLinear
-from CustomQuantization import CustomQuantization as quant
+from CustomQuantization_tensor import CustomQuantization as quant
 import os
 
 def convertDenseLayer(ModelModule, requires_plot=False):

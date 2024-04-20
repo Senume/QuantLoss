@@ -1,5 +1,5 @@
 import argparse
-import torch
+import torch                                                # type: ignore
 from convertQuantizeModel_tensor import convertDenseLayer
 
 def main():

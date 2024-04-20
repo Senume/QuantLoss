@@ -1,5 +1,5 @@
-import torch
-import torchaudio
+import torch            # type: ignore
+import torchaudio       # type: ignore
 
 def forwPass(X, w):
     '''
