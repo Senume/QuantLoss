@@ -30,7 +30,7 @@ def convertDenseLayer(ModelModule, requires_plot=False):
             print('Layer Name:', name)
             # Replaces with a linear layer with Quantization Layer
             QuantizationObject  = quant()
-            layerweight = child.weight.detach().numpy().copy()
+            layerweight = child.weight.clone().detach()
 
             QuantizationObject.extractRange(layerweight, save_plot=requires_plot, plot_path=f'./plots/{name}.png')
 

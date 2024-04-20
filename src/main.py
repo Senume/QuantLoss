@@ -1,6 +1,6 @@
 import argparse
 import torch
-from convertQuantizeModel import convertDenseLayer
+from convertQuantizeModel_tensor import convertDenseLayer
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
