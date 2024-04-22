@@ -1,4 +1,5 @@
-from transformers import BertModel, BertTokenizer, T5Tokenizer, T5ForConditionalGeneration
+from transformers import BertModel, BertTokenizer, T5Tokenizer, T5ForConditionalGeneration       # type: ignore
+import torch                                                                                     # type: ignore
 
 # Define the model name
 bert_model_name = 'bert-base-uncased'
@@ -13,6 +14,7 @@ t5_tokenizer = T5Tokenizer.from_pretrained(t5_model_name)
 t5_model = T5ForConditionalGeneration.from_pretrained(t5_model_name)
 
 # Optionally, save the model to a specific directory
-bert_model.save_pretrained(f'./src/saved/{bert_model_name}')
-t5_model.save_pretrained(f'./src/saved/{t5_model_name}')
+torch.save(bert_model, f"../../saved/{bert_model_name}.pt")
+torch.save(t5_model, f"../../saved/{t5_model_name}.pt")
+
 

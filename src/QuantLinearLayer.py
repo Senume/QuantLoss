@@ -11,7 +11,7 @@ class QuantLinear(nn.Module):
 
     def forward(self, input):
 
-        weight = self.QuantizationObject.dequantize()
-        weight = torch.tensor(weight, dtype=torch.float32)
+        with torch.no_grad():
+            weight = self.QuantizationObject.dequantize()
     
         return F.linear(input, weight, self.bias)

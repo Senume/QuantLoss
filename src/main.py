@@ -1,7 +1,7 @@
 import argparse
 import torch                                                # type: ignore
 from convertQuantizeModel_tensor import convertDenseLayer as gpuQuant
-from convertQuantizeModel import convertDenseLayer as cpuQuant
+from numpy_support.convertQuantizeModel import convertDenseLayer as cpuQuant
 
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')

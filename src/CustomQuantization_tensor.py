@@ -183,7 +183,7 @@ class CustomQuantization:
         dequantize_weight = level0 + level1 + level2 + level3
         PruningMatrix = (self.pruneIndexWeight != 1)
 
-        return dequantize_weight* PruningMatrix
+        return (dequantize_weight* PruningMatrix).clone().to(torch.float32)
 
     def pruneIndex(self, original_weight, Limits):
         """
