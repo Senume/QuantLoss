@@ -1,10 +1,10 @@
 import argparse
 import torch                                                # type: ignore
-from convertQuantizeModel_tensor import convertDenseLayer as gpuQuant
-from numpy_support.convertQuantizeModel import convertDenseLayer as cpuQuant
+from convertQuantizeModel_tensor import convertDenseLayer as tensorQuant
+# from numpy_support.convertQuantizeModel import convertDenseLayer as cpuQuant
 
 def main():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Quantization command')
 
     parser.add_argument('--modelpath', type=str,
                     help="model's directory which needs to be quantized.")    
@@ -20,17 +20,13 @@ def main():
     model = torch.load(args.modelpath)
 
     if args.tensor == "True":
-        quant_model = gpuQuant(model)
-    elif args.tensor == "False":
-        quant_model = cpuQuant(model)
+        quant_model = tensorQuant(model)
+    # elif args.tensor == "False":
+    #     quant_model = cpuQuant(model)
     else:
         raise ValueError("Please enter either True or False")
         
     torch.save(quant_model, args.outputpath + args.name + ".pt")
-
-
-
-    
 
 if __name__ == "__main__":
     main()
