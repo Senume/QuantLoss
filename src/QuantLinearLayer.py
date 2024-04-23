@@ -1,6 +1,6 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+import torch                    # type: ignore
+import torch.nn as nn           # type: ignore
+import torch.nn.functional as F # type: ignore
 
 class QuantLinear(nn.Module):
 
@@ -10,10 +10,8 @@ class QuantLinear(nn.Module):
         self.bias = bias
 
     def forward(self, input):
-        print("Forward Called")
 
-        weight = self.QuantizationObject.dequantize()
-        weight = torch.tensor(weight, dtype=torch.float32)
-        print(weight.dtype, self.bias.dtype)
+        with torch.no_grad():
+            weight = self.QuantizationObject.dequantize()
     
         return F.linear(input, weight, self.bias)

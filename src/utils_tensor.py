@@ -1,5 +1,5 @@
-import numpy as np
-from scipy import sparse
+import torch            # type: ignore
+import torchaudio       # type: ignore
 
 def forwPass(X, w):
     '''
@@ -7,13 +7,13 @@ def forwPass(X, w):
     
     Parameters
     ----------
-    X : numpy ndarray
+    X : torch tensor
        input data
-    w : numpy ndarray
+    w : torch tensor
        weights to be used for forward propagation
     Returns
     -------
-    numpy ndarray
+    torch tensor
        output of forward propagation
 
     '''
@@ -25,9 +25,9 @@ def lploss(processed_y, true_y, p = 2):
     
     Parameters
     ----------
-    processed_y : numpy ndarray
+    processed_y : torch tensor
         output of forward propagation on quantized weights
-    true_y : numpy ndarray
+    true_y : torch tensor
         output of forward propagation on orginal weights
     p : int (default = 2)
         dimension space of lp norm
@@ -35,40 +35,40 @@ def lploss(processed_y, true_y, p = 2):
     '''
 
     # Checking parameter instance type
-    if not isinstance(processed_y, np.ndarray):
-        raise TypeError("'processed_y' must be a numpy ndarray.")
+    if not isinstance(processed_y, torch.Tensor):
+        raise TypeError("'processed_y' must be a torch tensor.")
     
-    if not isinstance(true_y, np.ndarray):
-        raise TypeError("'true_y' must be a numpy ndarray.")
+    if not isinstance(true_y, torch.Tensor):
+        raise TypeError("'true_y' must be a torch tensor.")
     
     if not isinstance(p, int):
         raise TypeError("'p' must be an integer.")
 
-    return (np.sum(np.abs(true_y - processed_y)**p))**(1/p)
+    return torch.sum(torch.abs(processed_y - true_y)**p,dim=1)**(1/p)
 
 # Finding losses for different range threshold
-def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 0.001, p = 2 ):
+def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 500, p = 2 ):
     '''
     Functionality module to calculate the loss of the weight for varying thresholds.
 
     Parameters
     ----------
-    X : numpy ndarray
+    X : torch tensor
         input data for the forward popogation
-    w : numpy ndarray
+    w : torch tensor
         copy of the weights analysis
-    true_y : numpy ndarray
+    true_y : torch tensor
         output of forward propagation on orginal weights
     callbacklossfn : function
         loss function to calculate the loss of original output with output of pruned weights outcome
-    step : float (default = 0.001)
-        step size to create evenly spaced valued over min and max of the original weights
+    step : float (default = 500)
+        Number to step to create evenly spaced valued over min and max of the original weights
     p : int (default = 2)
         dimension space of lp norm
 
     Returns
     -------
-    (list, list)
+    (tensor 1D, tensor 1D)
         holds the tuple of thresholds and respective loss values (magnitude, loss)
     '''
     # Check parameters instance
@@ -79,27 +79,30 @@ def findLossPerThreshold(X, w, true_y, callbacklossfn, step = 0.001, p = 2 ):
         raise TypeError("'callbacklossfn' must be a callback loss function.")
 
     # Min and max range value of weight
-    local_min = np.min(w)
-    local_max = np.max(w)
+    local_min = torch.min(w)
+    local_max = torch.max(w)
 
+    
     # Number of point instances between min and max
-    points = int((local_max - local_min)/step)
-    print("Local minimum: ", local_min, " Local max: ", local_max, "Points: ", points)
-
+    print("Local minimum: ", local_min, " Local max: ", local_max, "Points: ", step)
+    
     # Initialize the range of threshold values temporary variable to hold the loss
-    mags = list(np.linspace(local_min, local_max, num= points, endpoint=False))
-    losses = []
+    Magnitudes = torch.linspace(start = (local_min),end = (local_max), steps= step)
+    Magnitudes = torch.unsqueeze(Magnitudes, 1)
+    Magnitudes = torch.unsqueeze(Magnitudes, 1)
 
-    # For each range of points as thresholds, compute the loss    
-    for mag in mags:
-        w[(w < mag)] = 0
-        
-        y = forwPass(X, w)
-        loss = callbacklossfn(y, true_y, p)
-        
-        losses.append(loss)
+    # Filtering weight based on threshold condition
+    Size = tuple(w.shape)
+    Size = (step, ) + Size
 
-    return mags, losses
+    ExtendedWeight = torch.tensor(())
+    ExtendedWeight = ExtendedWeight.new_ones(Size)*w
+    BooleanWeights = ExtendedWeight > Magnitudes
+    FilteredWeights = ExtendedWeight*BooleanWeights
+
+    Output = FilteredWeights@X.T
+    Loss = callbacklossfn(Output, true_y, p)
+    return Magnitudes.squeeze(), Loss.squeeze()
 
 def SmoothRollingAverage(samples, window_size=5, mode='same'):
     """
@@ -107,7 +110,7 @@ def SmoothRollingAverage(samples, window_size=5, mode='same'):
 
     Parameters
     ----------
-    samples : numpy ndarray (1D)
+    samples : torch tensor (1D)
         data samples on which smoothing is applied
     window_size : int (default = 5)
         convolution of kernel size
@@ -116,14 +119,15 @@ def SmoothRollingAverage(samples, window_size=5, mode='same'):
 
     Returns
     -------
-    numpy ndarray (1D)
+    torch tensor (1D)
         returns smooth data
     """
-    if not isinstance(samples, np.ndarray):
-        raise TypeError("'samples' must be a numpy ndarray.")
+    if not isinstance(samples, torch.Tensor):
+        raise TypeError("'samples' must be a torch tensor.")
 
-    kernel = np.ones(window_size)/window_size
-    conv_output = np.convolve(samples, kernel, mode)
+    kernel = torch.tensor(())
+    kernel = kernel.new_ones(window_size)/window_size
+    conv_output = torchaudio.functional.convolve(samples, kernel, mode)
     return conv_output
 
 def findRanges(True_Index, Slope, Threshold):
@@ -132,17 +136,17 @@ def findRanges(True_Index, Slope, Threshold):
 
     Parameters
     ----------
-    True_Index : numpy ndarray (1D)
+    True_Index : numpy ndarray (1D) or tensor (1D)
         Array which holds the the importance of elements at corresponding indices, represented as 0 or 1
-    Slope : numpy ndarray (1D)
+    Slope : numpy ndarray (1D) or tensor (1D)
         Array of slopes values 
-    Threshold : numpy ndarray (1D)
+    Threshold : numpy ndarray (1D) or tensor (1D)
         Array of thresholds values
 
     Returns
     -------
     list(tuple)
-        returns the list of extracted region as tuple, containing the subarray of slope values and thresholds values
+        returns the list of extracted region as tuple, containing the tensor subarray of slope values and thresholds values
     """
 
     # Holdding all the region of interest
@@ -162,12 +166,13 @@ def findRanges(True_Index, Slope, Threshold):
         
         # When the region is interupted, saving the observed region
         elif value == 0 and SlopeRegion and ThresholdRegion:
-            ListOfRegions.append((np.array(SlopeRegion), np.array(ThresholdRegion)))
+            ListOfRegions.append((torch.tensor(SlopeRegion), torch.tensor(ThresholdRegion)))
             SlopeRegion = []
             ThresholdRegion = []
+
     # Termination case if last region is not interrupted and iterated till end
     if SlopeRegion and ThresholdRegion:
-        ListOfRegions.append((np.array(SlopeRegion), np.array(ThresholdRegion)))
+        ListOfRegions.append((torch.tensor(SlopeRegion), torch.tensor(ThresholdRegion)))
 
     # Returning the list of regions
     return ListOfRegions
@@ -196,7 +201,7 @@ def findLargestRegion(ListOfRegions, Range):
 
     # For each individual element in the ListOfRegions
     for index, (SlopeRegion, ThresholdRegion) in enumerate(ListOfRegions):
-        subRange = np.max(ThresholdRegion) - np.min(ThresholdRegion)
+        subRange = torch.max(ThresholdRegion) - torch.min(ThresholdRegion)
 
         # Checking percentage of region it convers
         if subRange/Range > FirstRegionIndex[0]:
@@ -217,14 +222,14 @@ def findSlope(X, Range):
 
     Parameters
     ----------
-    X : numpy ndarray (1D)
+    X : torch tensor (1D)
         Time series signal
-    Range : numpy ndarray (1D)
+    Range : torch tensor (1D)
         Range points of the signal
 
     Returns
     -------
-    (numpy ndarray (1D), numpy ndarray (1D))
+    (torch tensor (1D), torch tensor (1D))
         returns the slope of the signal at each point with adjusted range points
     '''
     slope = X[1:] - X[:-1]
@@ -237,7 +242,7 @@ def findThreshold(signal, sensitivity=0.5):
 
     Parameter
     ---------
-    signal : numpy ndarray (1D)
+    signal : torch tensor (1D)
         To which threshold  need to be calculated.
     sensitivity : float (default = 0.5)
         hyper parameter to adjust the threshold strength.
@@ -248,31 +253,4 @@ def findThreshold(signal, sensitivity=0.5):
         Returns the threshold
 
     '''
-    return sensitivity*np.mean(signal)
-
-def findOutlinear(weight, std,sensitivity = 2):
-    '''
-    Function to find out the the outliers from the given weight
-
-    Parameters
-    ----------
-    weight : numpy ndarray (2D)
-        Original weight matrix
-    std : float
-        Standard deviation of the weight
-    sensitivity : float (default = 2)
-        Hyper parameter to adjust the deviation factor with respective to standard deviation.
-
-    Returns
-    -------
-    numpy sparse ndarray
-        Pruning weights indexes
-    '''
-
-    RightCase = weight > sensitivity*std
-    LeftCase = weight < (-1)*sensitivity*std
-    Index = LeftCase & RightCase
-
-    # Conversion to sparse matrix
-    SparseIndex = sparse.coo_matrix(Index)
-    return SparseIndex
+    return sensitivity*torch.mean(signal)
