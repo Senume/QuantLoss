@@ -1,6 +1,7 @@
 import torch                                                                        #type:ignore
-from  QuantLinearLayer_OutlierTraining import QuantLinear
-from  CustomQuantization_OutlierTraining import CustomQuantization as quant
+from  outlier_training.QuantLinearLayer_OutlierTraining import OutlierQuantLinear
+from  outlier_training.CustomQuantization_OutlierTraining import CustomQuantization as quant
+
 
 def convertDenseLayer(ModelModule):
     """
@@ -22,13 +23,16 @@ def convertDenseLayer(ModelModule):
         if isinstance(child, torch.nn.Linear):
             # Replaces with a linear layer with Quantization Layer
             QuantizationObject  = quant()
-            layerweight = child.weight.detach().numpy().copy()
+            layerweight = child.weight.clone().detach()
 
             QuantizationObject.extractRange(layerweight)
             QuantizationObject.proceedQuantization(layerweight)
-            Error = layerweight - QuantizationObject.dequantize()
+
+            outlier = QuantizationObject.outlierIndex
+            quant_weight = QuantizationObject.dequantize()
+            error = layerweight - quant_weight
             
-            QuantLayer = QuantLinear(QuantizationObject, child.bias, Error)
+            QuantLayer = OutlierQuantLinear(quant_weight,outlier, error, child.bias )
             setattr(ModelModule, name, QuantLayer)
         else:
             # Checking in the next level

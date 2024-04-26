@@ -254,3 +254,29 @@ def findThreshold(signal, sensitivity=0.5):
 
     '''
     return sensitivity*torch.mean(signal)
+
+def findOutliers(weight, sensitivity = 2):
+    '''
+    Function to find out the the outliers from the given weight
+
+    Parameters
+    ----------
+    weight : torch Tensor (2D)
+        Original weight matrix
+    std : float
+        Standard deviation of the weight
+    sensitivity : float (default = 2)
+        Hyper parameter to adjust the deviation factor with respective to standard deviation.
+
+    Returns
+    -------
+    torch Tensor
+        Pruning weights indexes
+    '''
+    std = torch.std(weight)
+    
+    RightCase = weight > sensitivity*std
+    LeftCase = weight < (-1)*sensitivity*std
+    Index = LeftCase * RightCase
+
+    return Index
