@@ -18,7 +18,7 @@ class OutlierQuantLinear(nn.Module):
     def forward(self, input_x):
 
         with torch.no_grad():
-            OutlierWeight = self.outliers*self.GradUpdates
+            OutlierWeight = self.outliers*self.Updates
             Weight = OutlierWeight + self.constant_weight
             
         return F.linear(input_x, Weight, self.bias)

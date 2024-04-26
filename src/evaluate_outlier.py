@@ -200,7 +200,7 @@ print("Classification report for original model saved to 'classification_report.
 
 #########################################################################################
 
-QuantOutlierModel = convertDenseLayer(Classifier_model.to('cpu')).to(device)
+QuantOutlierModel = convertDenseLayer(Pretrained_model.to('cpu')).to(device)
 Outliers_optimizer = Adam(QuantOutlierModel.parameters(), lr=5e-3)
 
 #########################################################################################
