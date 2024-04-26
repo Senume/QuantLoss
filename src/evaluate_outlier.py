@@ -25,8 +25,6 @@ parser.add_argument('--Token_max_length', type=int,
 parser.add_argument('--ModelPath', type=str,
                 help="Model Path.")  
 parser.add_argument('--TokenizerPath', type=str, default="True", 
-                help="Tokenizer Path.")  
-parser.add_argument('--TokenizerPath', type=str, default="True", 
                 help="Tokenizer Path.")
 parser.add_argument('--EpochCycle', type=int, default=5, 
                 help="Number of Epochs.")
@@ -45,10 +43,11 @@ Embeddings_length = args.Embeddings_length
 #########################################################################################
 
 class TextDataset(Dataset):
-    def __init__(self, data):
+    def __init__(self, data, num_classes):
         texts, labels = data
         self.texts = texts
         self.labels = labels
+        self.num_classes = num_classes
 
     def __len__(self):
         return len(self.texts)
@@ -56,7 +55,16 @@ class TextDataset(Dataset):
     def __getitem__(self, idx):
         text = self.texts[idx]
         label = self.labels[idx]
-        return text, label
+        # Convert the label to a one-hot encoded tensor
+        one_hot_label = self.one_hot_encode(label)
+        return text, one_hot_label
+
+    def one_hot_encode(self, label):
+        # Create a tensor of zeros of size num_classes
+        one_hot = torch.zeros(self.num_classes, dtype=torch.float32)
+        # Set the index corresponding to the label to 1
+        one_hot[label] = 1.0
+        return one_hot
     
 class SimpleClassifier(nn.Module):
     def __init__(self, input_size, output_classes):
@@ -86,11 +94,11 @@ train_sentences, train_labels = dataset["train"]["sentence"], dataset["train"]["
 test_sentences, test_labels = dataset["validation"]["sentence"], dataset["validation"]["label"]
 unique_class_count = len(set(train_labels))
 
-train_dataset = TextDataset(data=(train_sentences, train_labels))
-test_dataset = TextDataset(data=(test_sentences, test_labels))
+train_dataset = TextDataset(data=(train_sentences, train_labels), num_classes=unique_class_count)
+test_dataset = TextDataset(data=(test_sentences, test_labels),  num_classes=unique_class_count)
 
-train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-test_dataloader = DataLoader(test_dataset, batch_size=32)
+train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+test_dataloader = DataLoader(test_dataset, batch_size=64)
 
 #########################################################################################
 
@@ -100,6 +108,7 @@ tokenizer = torch.load(TokenizerPath)
 
 # Classifier Model
 Classifier_model = SimpleClassifier(input_size=Embeddings_length, output_classes=unique_class_count).to(device)
+Classifier_model = Classifier_model.train()
 
 # Optimizer and Loss function
 optimizer = Adam(Classifier_model.parameters(), lr=5e-3)
@@ -115,7 +124,9 @@ for epoch in range(EpochCycle):
 
     for text, labels in tqdm(train_dataloader):
         optimizer.zero_grad()
-
+        
+        labels = labels.to(torch.float32).to(device)
+        
         Tokenised_Sentence = tokenizer(text, max_length=512, padding='max_length', return_tensors='pt')
 
         Tokenised_Sentence.to(device)
@@ -123,15 +134,19 @@ for epoch in range(EpochCycle):
         Embeddings_Output = torch.sum(Output.last_hidden_state, dim= 1)
 
         Classifier_output = Classifier_model(Embeddings_Output)
-        Prediction = torch.argmax(Classifier_output, dim = 1 )
-        Loss = loss_fn(Prediction.to(torch.float64).to(device), labels.to(torch.float64).to(device))
+        print(Classifier_output)
+        #Prediction = torch.argmax(Classifier_output, dim = 1 ).to(torch.float32)
+
+        Loss = loss_fn(Classifier_output, labels)
 
         Loss.backward()
         optimizer.step()
 
         running_loss += Loss.item()
         total += labels.size(0)
-        correct += (Prediction == labels).sum().item()
+        pred = torch.argmax(Classifier_output, dim = 1 ).to(torch.float32)
+        gt = torch.argmax(labels, dim = 1 ).to(torch.float32)
+        correct += (pred == gt).sum().item()
 
     print('Epoch:', epoch+1)
     print('Training Loss:', running_loss / len(train_dataloader))
