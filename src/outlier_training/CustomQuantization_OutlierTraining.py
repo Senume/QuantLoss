@@ -15,7 +15,7 @@ class CustomQuantization:
         self.firstRange = None
         self.secondRange = None
 
-    def extractRange(self, original_weights, input_x = None, smoothing_window_size = 25, sensitivity = 0.5, save_plot=False, plot_path=None, step = 500):
+    def extractRange(self, original_weights, input_x = None, smoothing_window_size = 25, sensitivity = 0.5, save_plot=False, plot_path=None, step = 1000):
         '''
         Extraction of the configuration and required processes are performed. Then the quantization process is performed.
 

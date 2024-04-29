@@ -14,6 +14,7 @@ class OutlierQuantLinear(nn.Module):
         # Trainable Parameters
         self.bias = bias
         self.Updates = nn.Parameter(Error)
+        #self.outliers = Outliers
 
     def forward(self, input_x):
 

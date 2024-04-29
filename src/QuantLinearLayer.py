@@ -4,14 +4,12 @@ import torch.nn.functional as F # type: ignore
 
 class QuantLinear(nn.Module):
 
-    def __init__(self, QuantizationObject, bias):
+    def __init__(self, Weight, bias):
         super(QuantLinear, self).__init__()
-        self.QuantizationObject = QuantizationObject
+        
+        self.register_buffer('quantized_weight', Weight)
         self.bias = bias
 
     def forward(self, input):
 
-        with torch.no_grad():
-            weight = self.QuantizationObject.dequantize()
-    
-        return F.linear(input, weight, self.bias)
+        return F.linear(input, self.quantized_weight, self.bias)

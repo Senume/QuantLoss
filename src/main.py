@@ -1,6 +1,8 @@
 import argparse
-import torch                                                # type: ignore
+import torch                                                                                # type: ignore
 from convertQuantizeModel_tensor import convertDenseLayer as tensorQuant
+from transformers import AutoModelForCausalLM, AutoTokenizer                                # type: ignore
+
 # from numpy_support.convertQuantizeModel import convertDenseLayer as cpuQuant
 
 def main():
@@ -17,16 +19,23 @@ def main():
     
     args = parser.parse_args()
 
-    model = torch.load(args.modelpath)
+    if '.pt' in args.modelpath:
+        model = torch.load(args.modelpath)
+    else:
+        model = AutoModelForCausalLM.from_pretrained(args.modelpath, trust_remote_code=True)
+
 
     if args.tensor == "True":
-        quant_model = tensorQuant(model)
+        quant_model = tensorQuant(model, specific_name= args.name, requires_plot=False)
     # elif args.tensor == "False":
     #     quant_model = cpuQuant(model)
     else:
         raise ValueError("Please enter either True or False")
         
-    torch.save(quant_model, args.outputpath + args.name + ".pt")
+    if '.pt' in args.modelpath:
+        model = torch.save(quant_model, args.modelpath + args.name + '_quant.pt')
+    else:
+       quant_model.save_model(args.outputpath)
 
 if __name__ == "__main__":
     main()

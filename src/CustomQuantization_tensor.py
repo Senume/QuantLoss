@@ -41,6 +41,7 @@ class CustomQuantization:
             raise ValueError("'input_x' must be a 2D array")
 
         # Extraction of original weights forward-pass output
+        original_weights = original_weights.to(torch.float32)
         True_Y = original_weights@input_x.T
 
         # Finding the range loss quantity
@@ -57,8 +58,13 @@ class CustomQuantization:
         accepted_Index = smooth_Slope > cut_Threshold
 
         if save_plot:
+            Range_numpy = Range.clone().detach().numpy()
+            smooth_Slope_numpy = smooth_Slope.clone().detach().numpy()
+            accepted_Index_numpy = accepted_Index.clone().detach().numpy()
+            accepted_Index_numpy = accepted_Index_numpy*max(smooth_Slope_numpy)
+
             if isinstance(plot_path, str):
-                plt.plot(Range, smooth_Slope, Range, accepted_Index)
+                plt.plot(Range_numpy, smooth_Slope_numpy, Range_numpy, accepted_Index_numpy)
                 plt.title('REGION OF POSSIBLE SELECTION RANGE PLOT')
                 plt.xlabel('thresholds')
                 plt.ylabel('smoothened slope')

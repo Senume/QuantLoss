@@ -1,0 +1,24 @@
+Train set Classification Report
+              precision    recall  f1-score   support
+
+           0       0.99      0.98      0.98     20870
+           1       0.98      0.99      0.99     26275
+
+    accuracy                           0.99     47145
+   macro avg       0.99      0.99      0.99     47145
+weighted avg       0.99      0.99      0.99     47145
+Confusion matrix on Train
+array([[20387,   483],
+       [  150, 26125]])
+Test set Classification Report
+              precision    recall  f1-score   support
+
+           0       0.91      0.88      0.90      8910
+           1       0.91      0.93      0.92     11294
+
+    accuracy                           0.91     20204
+   macro avg       0.91      0.91      0.91     20204
+weighted avg       0.91      0.91      0.91     20204
+Confusion matrix on Train
+array([[ 7867,  1043],
+       [  749, 10545]])
